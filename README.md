@@ -105,10 +105,11 @@ Orden sugerido: `python -m scripts.seed` → `casos_minimos.http` → los demás
 Con el seed cargado y `casos_minimos.http` ejecutado (C-06 crea la venta 2 con dos renglones):
 
 ```bash
-python -m scripts.evidencia_c07 | tee evidencia/C-07_consultas.txt
+python -m scripts.evidencia_c07
 ```
 
-El script usa las mismas funciones del service que los endpoints y muestra cada SQL emitido:
+El script usa las mismas funciones del service que los endpoints, muestra cada SQL emitido
+y lo guarda en `evidencia/C-07_consultas.txt` (ese archivo es la evidencia entregada):
 
 | Lectura | Consultas |
 |---|---|

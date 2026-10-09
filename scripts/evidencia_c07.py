@@ -3,13 +3,15 @@ un número fijo de consultas, el mismo con uno o con varios autores / renglones.
 
 Uso (después de seed y de correr test/casos_minimos.http, que crea la venta 2 con
 dos renglones en C-06):
-    python -m scripts.evidencia_c07 | tee evidencia/C-07_consultas.txt
+    python -m scripts.evidencia_c07
 
-Imprime cada SQL emitido y el total por lectura. Usa las mismas funciones del
+Imprime cada SQL emitido y el total por lectura, y guarda lo mismo en
+evidencia/C-07_consultas.txt (UTF-8, para que se lea bien en cualquier sistema). Usa las mismas funciones del
 service que usan los endpoints GET /libros/{id} y GET /ventas/{id}.
 """
 
 import asyncio
+from pathlib import Path
 
 from sqlalchemy import event, func, select
 
@@ -18,6 +20,15 @@ from app.core.database import crear_fabrica_sesiones, crear_motor
 from app.modules.libros import service as libros_service
 from app.modules.ventas import service as ventas_service
 from app.modules.ventas.models import RenglonVenta
+
+
+SALIDA = Path("evidencia") / "C-07_consultas.txt"
+lineas: list[str] = []
+
+
+def mostrar(texto: str = "") -> None:
+    print(texto)
+    lineas.append(texto)
 
 
 async def main() -> None:
@@ -33,10 +44,12 @@ async def main() -> None:
         async with fabrica() as session:
             consultas.clear()
             descripcion = await lectura(session)
-            print(f"\n=== {titulo}: {descripcion}")
+            mostrar()
+            mostrar(f"=== {titulo}: {descripcion}")
             for numero, sql in enumerate(consultas, start=1):
-                print(f"--- consulta {numero}\n{sql}")
-            print(f">>> TOTAL: {len(consultas)} consultas")
+                mostrar(f"--- consulta {numero}")
+                mostrar(sql)
+            mostrar(f">>> TOTAL: {len(consultas)} consultas")
 
     def detalle_libro(libro_id: int):
         async def lectura(session):
@@ -65,9 +78,13 @@ async def main() -> None:
     if con_mas and con_mas != 1:
         await medir(f"GET /ventas/{con_mas}", detalle_venta(con_mas))
     else:
-        print("\n(Ejecutá antes el caso C-06 para tener una venta con varios renglones.)")
+        mostrar()
+        mostrar("(Ejecutá antes el caso C-06 para tener una venta con varios renglones.)")
 
     await motor.dispose()
+    SALIDA.parent.mkdir(exist_ok=True)
+    SALIDA.write_text("\n".join(lineas).lstrip("\n") + "\n", encoding="utf-8")
+    print(f"\nEvidencia guardada en {SALIDA}")
 
 
 if __name__ == "__main__":
